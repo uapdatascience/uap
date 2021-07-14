@@ -89,7 +89,7 @@ def debug_helper(df):
 
 def main():
     # first read in the file aaa
-    df = pd.read_csv('/Users/' + getpass.getuser() + '/Desktop/ufo/uap/raw_data/all_nuforc_data.csv')
+    df = pd.read_csv('/Users/' + getpass.getuser() + '/Desktop/uap/raw_data/all_nuforc_data.csv')
     df.rename(columns={'Summary':'summary','Shape':'shape', 'Duration' : 'duration', 'City':'city','State':'state'}, inplace=True)
     df['shape'] = df['shape'].str.lower()
     # now convert col formtting for Posted
@@ -121,7 +121,7 @@ def main():
 
 
 def add_coordinates_into_census_data():
-    df = pd.read_csv('/Users/' + getpass.getuser() + '/Desktop/ufo/uap/raw_data/census.csv')
+    df = pd.read_csv('/Users/' + getpass.getuser() + '/Desktop/uap/raw_data/census.csv')
     gn = geocoders.GeoNames("uapdatascience")
     coordinates = [0] * len(df)
     index = 0

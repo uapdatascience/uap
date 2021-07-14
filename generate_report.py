@@ -19,11 +19,11 @@ def generate_all_reports(df):
     generate_simple_shape_reports(df)
    
 def generate_simple_size_reports(df):
-    df['ufo_size'].value_counts().reset_index().to_csv('/Users/' + getpass.getuser() + '/Desktop/ufo/uap/generated_reports/size_count.csv', index=False)
+    df['ufo_size'].value_counts().reset_index().to_csv('/Users/' + getpass.getuser() + '/Desktop/uap/generated_reports/size_count.csv', index=False)
 
     
 def generate_simple_shape_reports(df):
-    df['shape'].value_counts().reset_index().to_csv('/Users/' + getpass.getuser() + '/Desktop/ufo/uap/generated_reports/shape_count.csv', index=False)
+    df['shape'].value_counts().reset_index().to_csv('/Users/' + getpass.getuser() + '/Desktop/uap/generated_reports/shape_count.csv', index=False)
     generate_shape_size_report(df)
     generate_shape_time_report(df)
     generate_shape_state_report(df)
@@ -40,7 +40,7 @@ def generate_shape_size_report(df): # do this by % of reports
     del gr2
     gc.collect()
     gr.sort_values(by=['size','count'], inplace=True, ascending=False)
-    gr.to_csv('/Users/' + getpass.getuser() + '/Desktop/ufo/uap/generated_reports/most_common_shapes_by_size.csv', index=False)
+    gr.to_csv('/Users/' + getpass.getuser() + '/Desktop/uap/generated_reports/most_common_shapes_by_size.csv', index=False)
     
 
 def generate_shape_time_report(orig_df): # do this by % of reports and by decade
@@ -59,7 +59,7 @@ def generate_shape_time_report(orig_df): # do this by % of reports and by decade
     del gr2
     gc.collect()
     gr.sort_values(by=['decade','count'], inplace=True, ascending=False)
-    gr.to_csv('/Users/' + getpass.getuser() + '/Desktop/ufo/uap/generated_reports/most_common_shapes_by_decade.csv', index=False)
+    gr.to_csv('/Users/' + getpass.getuser() + '/Desktop/uap/generated_reports/most_common_shapes_by_decade.csv', index=False)
 
     pass
 
@@ -81,7 +81,7 @@ def generate_shape_state_report(orig_df): # do this by % of reports and by state
     del gr2
     gc.collect()
     gr.sort_values(by=['state','count'], inplace=True, ascending=False)
-    gr.to_csv('/Users/' + getpass.getuser() + '/Desktop/ufo/uap/generated_reports/most_common_shapes_by_state.csv', index=False)
+    gr.to_csv('/Users/' + getpass.getuser() + '/Desktop/uap/generated_reports/most_common_shapes_by_state.csv', index=False)
     pass
 
 
