@@ -1,0 +1,45 @@
+Shape By Size :
+
+If you look at "most_common_shapes_by_size.csv", you will see that triangles
+are most often described as massive and are usually not described as small. This aligns
+with what I've read/heard.
+
+Shape By Decade :
+
+If you look at "most_common_shapes_by_decade.csv", you will see the most common shapes by decade. You can see that the popularity of seeing triangles skyrocketed starting in the 1970s. I have heard this on a UAP documentary series, so it was nice to be able to validate this data quickly by myself. Cigars seemed oddly popular in the first half of the 20th century. 
+
+Shape Distribution :
+
+By far, the most shapes are triangles, circles, and "light". 
+
+
+import geopandas as gpd
+df = gpd.read_file('raw_data/NewEnglandN_shorelines/NewEnglandN_shorelines.shp')
+
+NOTES/IDEAS:
+
+exclude anything more than x miles from military base 
+for lights, do some analysis on color! color by region/coast/decade/weather/season/etc.
+
+by hour of day, month, and both. look for seasonal shifts in hours seen. how does shape vary by hour and season? maybe triangles during day and lights at night? higher reliability rating during the day?
+
+in addition to distance to coast, look at closest distance to water point with depth more than X ft below sea level (maybe X should be 1000-4000 feet?).
+
+when looking at EM anomalies, look in both directions (highly vs low magnetism). historical changes in EM field after lots of visits? maybe shows mining?
+
+more sea related words : ship, boat, captain, sail, wave, crest, horizon?
+
+meteorological measurement related to electricity and magnetism related to weather other than just thunder storms?
+
+em/gravity terms from teodorani report :
+local geomagnetic field intensity
+solar activity
+magnetic anomaly zones
+gravimetric anomaly zones
+
+ufoinfo/unfoland data, site doesn't exist now but I've seen it mentioned a few times
+- look at ufo incidents in area vs. time based changes in EM fields in that area. look at correlation to delta of EM fields!
+- look at EM of siting area but also boolean to indicate anomaly within x miles of incident defined by threshold=Y
+- climate change vs sitings (since climate change is more rapid in some areas than others)? short term weather/temp changes?
+- sitings vs. temperature?
+
