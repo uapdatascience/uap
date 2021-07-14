@@ -3,7 +3,7 @@
 """
 Created on Tue Jul  6 20:50:10 2021
 
-@author: uapdatascience
+@author: johnferrigno
 
 read_ufos.py
 
