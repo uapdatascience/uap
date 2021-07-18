@@ -79,7 +79,7 @@ https://simplemaps.com/data/us-cities.
 
 import pandas as pd
 import numpy as np
-import os, datetime, re, gc, math
+import os, datetime, re, gc, math, copy
 from geopy import geocoders 
 import geopandas
 import getpass
@@ -124,14 +124,28 @@ def main():
     return df
 
 def merge_in_census_data(df):
-    census = pd.read_csv('/Users/' + getpass.getuser() + '/Desktop/uap/raw_data/census_with_coordinates_3.csv')
+    census = pd.read_csv('/Users/' + getpass.getuser() + '/Desktop/uap/raw_data/census_with_coordinates_4.csv')
     census.rename(columns={'state' : 'full_state_name', 'clean_name' : 'city'}, inplace=True)
     state_code_map = pd.read_csv('/Users/' + getpass.getuser() + '/Desktop/uap/raw_data/state_name_map.csv')
     state_code_map = {full_state_name : state_code for full_state_name, state_code in zip(state_code_map['full_state_name'].str.lower().values, state_code_map['state'].values)}
     census['state'] = census['full_state_name'].replace(state_code_map)
-    print(df)
-    print(census)
     df = pd.merge(df, census[['city','state','population','coordinates']], how='left', on=['city','state'])
+    
+    updated_census = copy.deepcopy(census)
+    updated_census['city'] = list(map(lambda x: x.replace(' borough',''), updated_census['city'].values))
+    df = merge_in_census_data_helper(df, updated_census)
+    
+    return df
+
+def merge_in_census_data_helper(df, updated_census):
+    if df['population'].count() == len(df):
+        return df
+    missing = df[df['population'].isnull()].drop(['population','coordinates'], axis=1)
+    df = df[df['population'].isnull() == False]
+    missing = pd.merge(missing, updated_census[['city','state','population','coordinates']], how='left', on=['city','state'])
+    df = pd.concat([df,missing])
+    del missing, updated_census
+    gc.collect()
     return df
 
 def geometry():
@@ -153,7 +167,7 @@ def add_coordinates_into_census_data(df=None, run_time_seconds=60*60*12):
     #df['coordinates'] = list(map(lambda x: tuple([float(i) for i in x.replace('(','').replace(')','').split(',')]) if type(x)==str else None, df['coordinates']))
     #census['distance'] = list(map(lambda x,y : max(abs(x[0]-y[0]),abs(x[1]-y[1])) if x is not None and y is not None else 0, census['coordinates'], census['state_coordinates']))
     #clean_name     47919
-    #coordinates    14324, 16602, 18356, 21237, 25953
+    #coordinates    14324, 16602, 18356, 21237, 25953, 36770, 36771
     if df is None:
         df = pd.read_csv('/Users/' + getpass.getuser() + '/Desktop/uap/raw_data/census.csv')
         df['coordinates'] = None
@@ -170,7 +184,7 @@ def add_coordinates_into_census_data(df=None, run_time_seconds=60*60*12):
     while (index < num_rows) and (not time_has_run_out):
         if index % 100 == 0:
             print(index, ' : ', num_rows, ' : ', datetime.datetime.now())
-        if coordinates[index] is None and index < 50000:#or math.isnan(coordinates[index]): 12000
+        if coordinates[index] is None and index > 23500:#or math.isnan(coordinates[index]): 12000
             coordinates[index] = get_coordinates(towns[index], states[index], gn)        
         index += 1    
         curr_time = datetime.datetime.now()
