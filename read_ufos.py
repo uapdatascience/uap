@@ -79,7 +79,7 @@ https://simplemaps.com/data/us-cities.
 
 import pandas as pd
 import numpy as np
-import os, datetime, re, gc, math, copy
+import os, datetime, re, gc, math, copy, time
 from geopy import geocoders 
 import geopandas
 import getpass
@@ -133,6 +133,7 @@ def run_get_gps_many_times():
         curr_run_time = (curr_time - clock_start).total_seconds()
         if curr_run_time > run_time_limit:
             time_has_run_out = True
+        time.sleep(60*60)
             
     
 
