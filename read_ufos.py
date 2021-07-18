@@ -73,12 +73,15 @@ cases where shape A visits and then shape B visits as a follow up? "specialist" 
 
 sighting by state? population adjusted?
 
+https://simplemaps.com/data/us-cities.
+
 """
 
 import pandas as pd
 import numpy as np
-import os, datetime, re, gc
+import os, datetime, re, gc, math
 from geopy import geocoders 
+import geopandas
 import getpass
 
 def debug_helper(df):
@@ -91,7 +94,8 @@ def main():
     # first read in the file aaa
     df = pd.read_csv('/Users/' + getpass.getuser() + '/Desktop/uap/raw_data/all_nuforc_data.csv')
     df.rename(columns={'Summary':'summary','Shape':'shape', 'Duration' : 'duration', 'City':'city','State':'state'}, inplace=True)
-    df['shape'] = df['shape'].str.lower()
+    for col in ['shape','city']:
+        df[col] = df[col].str.lower()
     # now convert col formtting for Posted
     df['date_posted'] = list(map(lambda x: convert_posted(x), df['Posted'].values))
     df.drop(['Posted'], axis=1, inplace=True)
@@ -114,35 +118,92 @@ def main():
     df['summary'] = df['summary'].fillna(value='')
     df['summary'] = list(map(lambda summary : summary.lower(), df['summary'].values))
     df['ufo_size'] = list(map(lambda summary : get_ufo_size(summary), df['summary'].values))
-    
+    df = merge_in_census_data(df)
 
     
     return df
 
+def merge_in_census_data(df):
+    census = pd.read_csv('/Users/' + getpass.getuser() + '/Desktop/uap/raw_data/census_with_coordinates_3.csv')
+    census.rename(columns={'state' : 'full_state_name', 'clean_name' : 'city'}, inplace=True)
+    state_code_map = pd.read_csv('/Users/' + getpass.getuser() + '/Desktop/uap/raw_data/state_name_map.csv')
+    state_code_map = {full_state_name : state_code for full_state_name, state_code in zip(state_code_map['full_state_name'].str.lower().values, state_code_map['state'].values)}
+    census['state'] = census['full_state_name'].replace(state_code_map)
+    print(df)
+    print(census)
+    df = pd.merge(df, census[['city','state','population','coordinates']], how='left', on=['city','state'])
+    return df
 
-def add_coordinates_into_census_data():
-    df = pd.read_csv('/Users/' + getpass.getuser() + '/Desktop/uap/raw_data/census.csv')
+def geometry():
+    geo_file = geopandas.datasets.get_path("naturalearth_lowres")
+    world = geopandas.read_file(geo_file)
+    x, y = world[world['name']=='United States of America']['geometry'].values[0][0].exterior.coords.xy
+    
+    world = geopandas.read_file('raw_data/NewEnglandN_shorelines/NewEnglandN_shorelines.shp')
+    df = world[world['Date_']=='09/30/2000'].sort_values('RouteID')
+    import matplotlib.pyplot as plt
+    df.plot()
+    plt.savefig('all_coast.jpg')
+    
+
+def add_coordinates_into_census_data(df=None, run_time_seconds=60*60*12):
+    
+    #TO DO : " borough"
+    
+    #df['coordinates'] = list(map(lambda x: tuple([float(i) for i in x.replace('(','').replace(')','').split(',')]) if type(x)==str else None, df['coordinates']))
+    #census['distance'] = list(map(lambda x,y : max(abs(x[0]-y[0]),abs(x[1]-y[1])) if x is not None and y is not None else 0, census['coordinates'], census['state_coordinates']))
+    #clean_name     47919
+    #coordinates    14324, 16602, 18356, 21237, 25953
+    if df is None:
+        df = pd.read_csv('/Users/' + getpass.getuser() + '/Desktop/uap/raw_data/census.csv')
+        df['coordinates'] = None
+        df['clean_name'] = list(map(lambda x: x[:-3] if x[-3:] == ' ut' else x, df['clean_name']))
+        df['clean_name'] = list(map(lambda x: x.replace(' consolidated government','').replace(' unified government',''), df['clean_name']))
     gn = geocoders.GeoNames("uapdatascience")
-    coordinates = [0] * len(df)
+    coordinates = list(df['coordinates'])
     index = 0
     num_rows = len(df)
     towns = df['clean_name'].values
     states = df['state'].values
-    while index < num_rows:
+    clock_start = datetime.datetime.now()
+    time_has_run_out = False
+    while (index < num_rows) and (not time_has_run_out):
         if index % 100 == 0:
             print(index, ' : ', num_rows, ' : ', datetime.datetime.now())
-        coordinates[index] = get_coordinates(towns[index], states[index], gn)        
+        if coordinates[index] is None and index < 50000:#or math.isnan(coordinates[index]): 12000
+            coordinates[index] = get_coordinates(towns[index], states[index], gn)        
         index += 1    
+        curr_time = datetime.datetime.now()
+        if (curr_time - clock_start).total_seconds() > run_time_seconds:
+            time_has_run_out = True
     df['coordinates'] = coordinates
     del coordinates, towns, states
     gc.collect()
     return df
     
-def get_coordinates(town, state, gn):
+def get_coordinates_helper(town, state, gn):
     try:
-        coordinates = gn.geocode("simsbury, ct")[1]
+        coordinates = gn.geocode(town + ", " + state + " , usa")[1]
     except:
         coordinates = None
+    return coordinates
+
+def get_coordinates(town, state, gn):
+    coordinates = get_coordinates_helper(town, state, gn)
+    if coordinates is None:
+        town_to_try = town[:-3] if town[-3:] == ' ut' else town
+        town_to_try = town_to_try.replace(' unified government','').replace(' village','').replace(' consolidated government','').replace(' indianship','')
+        town_to_try = town_to_try.replace(' consolidated','')
+        coordinates = get_coordinates_helper(town_to_try, state, gn)
+    if coordinates is None:
+        curr_town_to_try = town_to_try.replace('-','')
+        coordinates = get_coordinates_helper(curr_town_to_try, state, gn)
+    if coordinates is None:
+        curr_town_to_try = town_to_try.replace("'","")
+        coordinates = get_coordinates_helper(curr_town_to_try, state, gn)
+    if coordinates is None:
+        curr_town_to_try = town_to_try.split('-')[-1]
+        coordinates = get_coordinates_helper(curr_town_to_try, state, gn)
     return coordinates
 
 def get_ufo_size(summary):

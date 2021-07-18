@@ -43,3 +43,10 @@ ufoinfo/unfoland data, site doesn't exist now but I've seen it mentioned a few t
 - climate change vs sitings (since climate change is more rapid in some areas than others)? short term weather/temp changes?
 - sitings vs. temperature?
 
+text search : storm/rain/cloud/thunder/lighting.pouring.snow/hail/sleet
+auto correlation of sitings by area or time? hour/day/week/month/year?
+color/texture columns ? :metallic,reflective,shiny,clear,blue,yellow,etc.,lights,sharp,smooth,smooth corners,matte,flat,see through
+
+1 craft or multiple? how many? formation?
+
+keyword search : drunk, drink, smoke, party, good time, drug, drug names
