@@ -124,7 +124,7 @@ def main():
     return df
 
 def run_get_gps_many_times():
-    run_time_limit = 3*60*1
+    run_time_limit = 60*60*3
     clock_start = datetime.datetime.now()
     time_has_run_out = False
     while not time_has_run_out:
@@ -133,7 +133,8 @@ def run_get_gps_many_times():
         curr_run_time = (curr_time - clock_start).total_seconds()
         if curr_run_time > run_time_limit:
             time_has_run_out = True
-        time.sleep(60*60)
+            break
+        time.sleep(45*60)
             
     
 

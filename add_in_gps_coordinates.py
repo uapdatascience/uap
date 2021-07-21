@@ -10,7 +10,8 @@ add_in_gps_coordinates.py
 """
 
 import gc, datetime, copy, getpass
-from geopy import geocoders 
+from geopy import geocoders
+from geopy.distance import geodesic
 import pandas as pd
 import numpy as np
 
@@ -21,13 +22,13 @@ def add_coordinates_into_census_data(df=None, run_time_seconds=60*60*12, start_i
     #df['coordinates'] = list(map(lambda x: tuple([float(i) for i in x.replace('(','').replace(')','').split(',')]) if type(x)==str else None, df['coordinates']))
     #census['distance'] = list(map(lambda x,y : max(abs(x[0]-y[0]),abs(x[1]-y[1])) if x is not None and y is not None else 0, census['coordinates'], census['state_coordinates']))
     #clean_name     47919
-    #coordinates    14324, 16602, 18356, 21237, 25953, 36770, 36771
+    #coordinates    14324, 16602, 18356, 21237, 25953, 36770, 36771, 37665, 38633, 39615, 46366, 47953, 47960
     if df is None:
         df = pd.read_csv('/Users/' + getpass.getuser() + '/Desktop/uap/raw_data/census.csv')
         df['coordinates'] = None
         df['clean_name'] = list(map(lambda x: x[:-3] if x[-3:] == ' ut' else x, df['clean_name']))
         df['clean_name'] = list(map(lambda x: x.replace(' consolidated government','').replace(' unified government',''), df['clean_name']))
-    gn = geocoders.GeoNames("uapdatascience")
+    gn = geocoders.GeoNames("uapdatascience") #johndouglass24
     coordinates = list(df['coordinates'])
     index = 0
     num_rows = len(df)
@@ -49,6 +50,19 @@ def add_coordinates_into_census_data(df=None, run_time_seconds=60*60*12, start_i
     gc.collect()
     return df
 
+def add_in_state_coordinates_map(df):
+    state_map = {}
+    states = list(set(df['state']))
+    gn = geocoders.GeoNames("johndouglass24")
+    for state in states:
+        if state == 'washington':
+            state_map[state] = gn.geocode("washington state, usa")[1]
+        elif state == 'district of columbia':
+            state_map[state] = gn.geocode("washington, usa")[1]
+        else:
+            state_map[state] = gn.geocode(state + ", usa")[1]
+    df['state_coordinates'] = list(map(lambda st: state_map[st], df['state'].values))
+    return df
 
 def get_coordinates_helper(town, state, gn):
     try:
@@ -78,8 +92,8 @@ def get_coordinates(town, state, gn):
 if __name__ == '__main__':
     df = pd.read_csv('/Users/' + getpass.getuser() + '/Desktop/uap/raw_data/census_with_coordinates_4.csv')
     df['coordinates'] = list(map(lambda x: tuple([float(i) for i in x.replace('(','').replace(')','').split(',')]) if type(x)==str else None, df['coordinates']))
-    start_index = np.random.randint(0, len(df) - 500)
-    add_coordinates_into_census_data(df=df, run_time_seconds=1*60, start_index=start_index)
+    start_index = np.random.choice([0,10000])
+    add_coordinates_into_census_data(df=df, run_time_seconds=20*60, start_index=0) #johndouglass24
     df.to_csv('/Users/' + getpass.getuser() + '/Desktop/uap/raw_data/census_with_coordinates_4.csv', index=False)
     
     
