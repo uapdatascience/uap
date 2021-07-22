@@ -138,18 +138,47 @@ def run_get_gps_many_times():
             
     
 
-def merge_in_census_data(df):
-    census = pd.read_csv('/Users/' + getpass.getuser() + '/Desktop/uap/raw_data/census_with_coordinates_4.csv')
+def merge_in_census_data(df, retrieve_new_coordinates = False):
+    # df[(df['population'].isnull())&(df['city'].isnull()==False)&(df['state'].isnull()==False)&(df['city']!='none')&(df['city'].str.contains('\(')==False)&(df['city'].str.contains('\)')==False)]
+    census = pd.read_csv('/Users/' + getpass.getuser() + '/Desktop/uap/raw_data/census_with_coordinates.csv')
     census.rename(columns={'state' : 'full_state_name', 'clean_name' : 'city'}, inplace=True)
     state_code_map = pd.read_csv('/Users/' + getpass.getuser() + '/Desktop/uap/raw_data/state_name_map.csv')
     state_code_map = {full_state_name : state_code for full_state_name, state_code in zip(state_code_map['full_state_name'].str.lower().values, state_code_map['state'].values)}
     census['state'] = census['full_state_name'].replace(state_code_map)
     df = pd.merge(df, census[['city','state','population','coordinates']], how='left', on=['city','state'])
     
+    df['state'] = df['state'].fillna(value='')
+    state_coordinate_map = census[['state','state_coordinates']].drop_duplicates()
+    state_coordinate_map_extra = pd.DataFrame({'state' : ['PR','DC'], 'state_coordinates' : [(18.24829, -66.49989), (38.89511, -77.03637)]})
+    state_coordinate_map = pd.concat([state_coordinate_map, state_coordinate_map_extra])
+    del state_coordinate_map_extra
+    df = pd.merge(df, state_coordinate_map, how='left', on=['state'])
+    del state_coordinate_map
+    
+    df['coordinates'] = np.where((df['state']=='DC')&(df['coordinates'].isnull())&(df['city'].str.contains('washington')), df['state_coordinates'], df['coordinates'])
+    df['population'] = np.where((df['state']=='DC')&(df['population'].isnull())&(df['city'].str.contains('washington')), 601723, df['population'])
+
+    
     updated_census = copy.deepcopy(census)
     updated_census['city'] = list(map(lambda x: x.replace(' borough',''), updated_census['city'].values))
     df = merge_in_census_data_helper(df, updated_census)
     
+    updated_census = copy.deepcopy(census)
+    updated_census['city'] = list(map(lambda x: x.replace(' village',''), updated_census['city'].values))
+    df = merge_in_census_data_helper(df, updated_census)   
+    
+    updated_census = copy.deepcopy(census)
+    updated_census['city'] = list(map(lambda x: x + ' city', updated_census['city'].values))
+    df = merge_in_census_data_helper(df, updated_census)   
+    
+    if retrieve_new_coordinates:
+        # here we run through and use gn to get coordinates with exact city and state col (can use state code)
+        # just do this when city and state are both not null or empty string
+        # just do this when we have state_coordinates column not null (which means this is a US state or DC or puerto rico (PR))
+        # save results into csv that we can read later on if "retrieve_new_coordinates" is set to "False"
+        # run this code in its own sub function
+        pass
+
     return df
 
 def merge_in_census_data_helper(df, updated_census):
